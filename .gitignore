@@ -44,8 +44,7 @@ htmlcov/
 *.swp
 *.swo
 
-# Alembic
-alembic/versions/*.py
+# Alembic — commit migration files; only ignore the placeholder
 !alembic/versions/.gitkeep
 
 # OS

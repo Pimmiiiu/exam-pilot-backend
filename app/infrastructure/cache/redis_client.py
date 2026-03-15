@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 from typing import Optional
 
 import redis
@@ -9,17 +10,21 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 _redis_client: Optional[redis.Redis] = None
+_redis_lock = threading.Lock()
 
 
 def get_redis() -> Optional[redis.Redis]:
     global _redis_client
-    if _redis_client is None:
-        try:
-            _redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
-            _redis_client.ping()
-        except Exception as exc:
-            logger.warning("Redis unavailable: %s", exc)
-            _redis_client = None
+    if _redis_client is not None:
+        return _redis_client
+    with _redis_lock:
+        if _redis_client is None:
+            try:
+                client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+                client.ping()
+                _redis_client = client
+            except Exception as exc:
+                logger.warning("Redis unavailable: %s", exc)
     return _redis_client
 
 

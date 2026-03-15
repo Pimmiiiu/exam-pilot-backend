@@ -4,6 +4,8 @@ from sqlalchemy import func
 from app.infrastructure.db.models import ExamAttempt, UserAnswer, Question
 from app.schemas.analytics import UserProgressResponse, WeakTopic, ExamStatsResponse
 
+WEAK_TOPIC_ACCURACY_THRESHOLD = 70.0
+
 
 def get_user_progress(user_id: str, db: Session) -> UserProgressResponse:
     attempts = db.query(ExamAttempt).filter(ExamAttempt.user_id == user_id).all()
@@ -43,7 +45,7 @@ def get_user_progress(user_id: str, db: Session) -> UserProgressResponse:
     for topic, wrong in wrong_map.items():
         total = total_map.get(topic, 0)
         accuracy = round((1 - wrong / total) * 100, 2) if total > 0 else 0.0
-        if accuracy < 70:
+        if accuracy < WEAK_TOPIC_ACCURACY_THRESHOLD:
             weak_topics.append(WeakTopic(topic=topic, accuracy=accuracy))
     weak_topics.sort(key=lambda t: t.accuracy)
 

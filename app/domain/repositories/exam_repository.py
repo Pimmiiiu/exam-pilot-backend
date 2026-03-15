@@ -23,5 +23,9 @@ class ExamRepository(ABC):
         ...
 
     @abstractmethod
+    def get_question_by_id(self, question_id: str) -> Optional[QuestionEntity]:
+        ...
+
+    @abstractmethod
     def add_question(self, exam_id: str, question_text: str, explanation: str, topic: str, difficulty: str, choices: list) -> QuestionEntity:
         ...

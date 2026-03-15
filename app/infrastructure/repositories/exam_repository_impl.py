@@ -68,6 +68,15 @@ class ExamRepositoryImpl(ExamRepository):
         )
         return [_question_to_entity(q) for q in questions]
 
+    def get_question_by_id(self, question_id: str) -> Optional[QuestionEntity]:
+        question = (
+            self.db.query(Question)
+            .options(joinedload(Question.choices))
+            .filter(Question.id == question_id)
+            .first()
+        )
+        return _question_to_entity(question) if question else None
+
     def add_question(self, exam_id: str, question_text: str, explanation: str, topic: str, difficulty: str, choices: list) -> QuestionEntity:
         question = Question(
             exam_id=exam_id,

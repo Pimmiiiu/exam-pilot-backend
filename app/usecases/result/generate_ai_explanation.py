@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Optional
 
@@ -33,42 +32,39 @@ async def get_ai_explanation_for_answer(
         cache_set(cache_key, schema.model_dump(), ttl=CACHE_TTL)
         return schema
 
-    from app.infrastructure.db.models import Question, Choice
-    from sqlalchemy.orm import Session
+    question = exam_repo.get_question_by_id(question_id)
+    if not question:
+        return None
 
-    if hasattr(exam_repo, "db"):
-        db: Session = exam_repo.db
-        question = db.query(Question).filter(Question.id == question_id).first()
-        wrong_choice = db.query(Choice).filter(Choice.id == wrong_choice_id).first()
-        if not question or not wrong_choice:
-            return None
-        correct_choice = next((c for c in question.choices if c.is_correct), None)
+    choices = question.choices or []
+    wrong_choice = next((c for c in choices if c.id == wrong_choice_id), None)
+    if not wrong_choice:
+        return None
+    correct_choice = next((c for c in choices if c.is_correct), None)
 
-        llm_result = await generate_explanation(
-            question_text=question.question_text,
-            choices=[{"choice_text": c.choice_text, "is_correct": c.is_correct} for c in question.choices],
-            correct_answer=correct_choice.choice_text if correct_choice else "",
-            student_answer=wrong_choice.choice_text,
-        )
-        if llm_result is None:
-            return None
+    llm_result = await generate_explanation(
+        question_text=question.question_text,
+        choices=[{"choice_text": c.choice_text, "is_correct": c.is_correct} for c in choices],
+        correct_answer=correct_choice.choice_text if correct_choice else "",
+        student_answer=wrong_choice.choice_text,
+    )
+    if llm_result is None:
+        return None
 
-        topics = llm_result.get("topics_to_review", [])
-        explanation_text = llm_result.get("explanation", "")
-        why_wrong = llm_result.get("why_wrong", "")
+    topics = llm_result.get("topics_to_review", [])
+    explanation_text = llm_result.get("explanation", "")
+    why_wrong = llm_result.get("why_wrong", "")
 
-        saved = result_repo.save_ai_explanation(
-            question_id=question_id,
-            wrong_choice_id=wrong_choice_id,
-            explanation=explanation_text,
-            topics_to_review=topics,
-        )
-        schema = AIExplanationSchema(
-            explanation=explanation_text,
-            why_wrong=why_wrong,
-            topics_to_review=topics,
-        )
-        cache_set(cache_key, schema.model_dump(), ttl=CACHE_TTL)
-        return schema
-
-    return None
+    result_repo.save_ai_explanation(
+        question_id=question_id,
+        wrong_choice_id=wrong_choice_id,
+        explanation=explanation_text,
+        topics_to_review=topics,
+    )
+    schema = AIExplanationSchema(
+        explanation=explanation_text,
+        why_wrong=why_wrong,
+        topics_to_review=topics,
+    )
+    cache_set(cache_key, schema.model_dump(), ttl=CACHE_TTL)
+    return schema
