@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, List
 
 
@@ -18,4 +18,4 @@ class QuestionEntity:
     explanation: Optional[str]
     topic: Optional[str]
     difficulty: Optional[str]
-    choices: List[ChoiceEntity] = None
+    choices: List[ChoiceEntity] = field(default_factory=list)

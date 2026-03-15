@@ -21,9 +21,11 @@ def get_result(
 ):
     exam_repo = ExamRepositoryImpl(db)
     result_repo = ResultRepositoryImpl(db)
-    result = calculate_result(attempt_id, exam_repo, result_repo)
     attempt = result_repo.get_attempt(attempt_id)
-    if attempt and attempt.user_id != current_user.id and current_user.role != "admin":
+    if attempt is None:
+        from fastapi import HTTPException, status
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
+    if attempt.user_id != current_user.id and current_user.role != "admin":
         from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
-    return result
+    return calculate_result(attempt_id, exam_repo, result_repo)

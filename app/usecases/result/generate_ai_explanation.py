@@ -34,8 +34,6 @@ async def get_ai_explanation_for_answer(
         cache_set(cache_key, schema.model_dump(), ttl=CACHE_TTL)
         return schema
 
-    questions = exam_repo.get_questions.__func__ if hasattr(exam_repo.get_questions, "__func__") else None
-
     from app.infrastructure.db.models import Question, Choice
     from sqlalchemy.orm import Session
 
