@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
@@ -23,9 +23,7 @@ def get_result(
     result_repo = ResultRepositoryImpl(db)
     attempt = result_repo.get_attempt(attempt_id)
     if attempt is None:
-        from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
     if attempt.user_id != current_user.id and current_user.role != "admin":
-        from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     return calculate_result(attempt_id, exam_repo, result_repo)

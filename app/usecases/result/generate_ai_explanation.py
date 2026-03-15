@@ -1,5 +1,4 @@
 import json
-import asyncio
 import logging
 from typing import Optional
 
@@ -43,7 +42,6 @@ async def get_ai_explanation_for_answer(
         wrong_choice = db.query(Choice).filter(Choice.id == wrong_choice_id).first()
         if not question or not wrong_choice:
             return None
-        choices = db.query(Choice).filter(Choice.id.in_([c.id for c in question.choices])).all()
         correct_choice = next((c for c in question.choices if c.is_correct), None)
 
         llm_result = await generate_explanation(

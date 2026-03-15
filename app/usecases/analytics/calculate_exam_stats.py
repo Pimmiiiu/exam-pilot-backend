@@ -20,8 +20,8 @@ def get_user_progress(user_id: str, db: Session) -> UserProgressResponse:
         .join(UserAnswer, UserAnswer.question_id == Question.id)
         .filter(
             UserAnswer.attempt_id.in_(attempt_ids),
-            UserAnswer.is_correct == False,
-            Question.topic != None,
+            UserAnswer.is_correct.is_(False),
+            Question.topic.is_not(None),
         )
         .group_by(Question.topic)
         .all()
@@ -31,7 +31,7 @@ def get_user_progress(user_id: str, db: Session) -> UserProgressResponse:
         .join(UserAnswer, UserAnswer.question_id == Question.id)
         .filter(
             UserAnswer.attempt_id.in_(attempt_ids),
-            Question.topic != None,
+            Question.topic.is_not(None),
         )
         .group_by(Question.topic)
         .all()
